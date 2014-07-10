@@ -26,7 +26,7 @@ set<string> commaSet = set<string>();
 double Negative_Infinity = -1e100;
 double Positive_Infinity = 1e100;
 
-int main(int argc, char* argv[]){
+int OriginMain(int argc, char* argv[]){
 	/* 1.init(arguments) --- the same as the original one */
 	punctSet.insert("''");
 	punctSet.insert("``");

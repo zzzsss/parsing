@@ -10,6 +10,10 @@
 
 
 void newone_outputparse(DependencyParser* dp);
+vector<int>* newone_outputparse_one(DependencyParser* dp,DependencyInstance *instance,bool write);
 
+//sth convinient for testing
+//#define OringalMain
+#define Test2Main main
 
 #endif /* NEW_ONE_H_ */
