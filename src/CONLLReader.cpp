@@ -26,8 +26,7 @@ DependencyInstance* CONLLReader::getNext(){
 	int str_len = (int)(strlen(line));
 	line[str_len - 1] = '\0';
 	while(!feof(inputReader) && !(str_len == 1) && !(line[0] == '*')){
-		string tmp = string(line);
-		str = new string(tmp);
+		str = new string(line);
 		vector<string*>* aaa = Util::split(str, '\t');
 		lineList->push_back(aaa);
 		delete (str);
@@ -51,9 +50,10 @@ DependencyInstance* CONLLReader::getNext(){
 	(*heads)[0] = -1;
 	
 	for(int i = 0; i < length; i++){
+		//the new form
 		vector<string*>* info = (*lineList)[i];
 		(*forms)[i + 1] = normalize((*info)[1]);
-		(*heads)[i + 1] = Util::stringToInt((*info)[6]);
+		(*heads)[i + 1] = Util::stringToInt((*info)[8]);
 		vector<string*>::iterator iter;
 		for(iter = info->begin(); iter != info->end(); iter++){
 			//cout<<(*iter)->c_str()<<" ";

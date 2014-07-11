@@ -46,6 +46,7 @@ void fill_result(int length,int *which,vector<int>* result,int s,int t,int lr,in
 	}
 }
 
+//#define double int
 vector<int>* decodeProjective(int length,double* scores)
 {
 	// the tables
@@ -80,7 +81,7 @@ vector<int>* decodeProjective(int length,double* scores)
 				double tmp = scores_table[get_index(length,s,r,E_RIGHT,E_COM)]
 				                          +scores_table[get_index(length,r+1,t,E_LEFT,E_COM)]
 				                                        +scores[get_index2(length,s,t,E_LEFT)];
-				if(tmp > max_score){
+				if(tmp >= max_score){
 					max_score = tmp;
 					u = r;
 				}
@@ -96,10 +97,11 @@ vector<int>* decodeProjective(int length,double* scores)
 				double tmp = scores_table[get_index(length,s,r,E_RIGHT,E_COM)]
 				                          +scores_table[get_index(length,r+1,t,E_LEFT,E_COM)]
 				                                        +scores[get_index2(length,s,t,E_RIGHT)];
-				if(tmp > max_score){
+				if(tmp >= max_score){
 					max_score = tmp;
 					u = r;
 				}
+
 			}
 			the_ind = get_index(length,s,t,E_RIGHT,E_INCOM);
 			scores_table[the_ind]=max_score;
@@ -112,7 +114,7 @@ vector<int>* decodeProjective(int length,double* scores)
 			for(int r = s; r < t; r++){
 				double tmp = scores_table[get_index(length,s,r,E_LEFT,E_COM)]
 				                          +scores_table[get_index(length,r,t,E_LEFT,E_INCOM)];
-				if(tmp > max_score){
+				if(tmp >= max_score){
 					max_score = tmp;
 					u = r;
 				}
@@ -127,7 +129,7 @@ vector<int>* decodeProjective(int length,double* scores)
 			for(int r = s+1; r <= t; r++){
 				double tmp = scores_table[get_index(length,s,r,E_RIGHT,E_INCOM)]
 				                          +scores_table[get_index(length,r,t,E_RIGHT,E_COM)];
-				if(tmp > max_score){
+				if(tmp >= max_score){
 					max_score = tmp;
 					u = r;
 				}

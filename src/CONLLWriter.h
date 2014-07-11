@@ -10,11 +10,29 @@ using namespace std;
 
 class CONLLWriter{
 protected:
-	FILE* writer;
+	FILE* writer=0;
 public:
-	CONLLWriter();
-	void write(vector<string*> &forms , vector<int> &heads);
-	void startWriting(const char* file);
-	void finishWriting();
+	CONLLWriter(){}
+	void write(vector<string*> &forms , vector<int> &heads){
+		int length = (int)(forms.size());
+		string* str;
+		for(int i = 0; i<length; ++i){
+			fprintf(writer, "%d\t", i + 1);
+
+			str = forms[i];
+			fprintf(writer, "%s\t_\t", str->c_str());
+
+			fprintf(writer, "_\t_\t_\t%d\t",  heads[i]);
+
+			fprintf(writer, "_\n");
+		}
+		fputc('\n', writer);
+	}
+	void startWriting(const char* file){
+		writer = fopen(file, "w");
+	}
+	void finishWriting(){
+		fclose(writer);
+	}
 };
 #endif

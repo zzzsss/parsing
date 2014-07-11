@@ -14,7 +14,7 @@
 #include <cstdlib>
 using namespace std;
 
-#define Negative_Infinity 1e-100
+#define Negative_Infinity -10000
 
 #define E_LEFT 0
 #define E_RIGHT 1

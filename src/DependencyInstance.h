@@ -30,6 +30,5 @@ public:
 	string* toString();
 	//void writeObject(ObjectWriter &out);
 	//void readObject(ObjectReader &in);
-
 };
 #endif
