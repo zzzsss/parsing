@@ -8,10 +8,13 @@
 /* the dependency pasing using MSTparser and NN */
 #include "Eisner.h"
 #include <ctime>
+#include <cstdlib>
+#include <cstdio>
 #include "pre_training.h"
 
-int main(int argc,char ** argv)
+int main1(int argc,char ** argv)
 {
+	srand(time(0));
 	pre_training_space::pre_training();
 	return 0;
 }
