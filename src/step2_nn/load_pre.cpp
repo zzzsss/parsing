@@ -16,6 +16,14 @@ vector<string*> *all_feats_strings;
 vector<double> *all_score;
 HashMap *all_features;
 
+//check memory
+#ifdef MEMORY_DEBUG
+int mem_string=0;	//strings
+int mem_num=0;	//all_score/hash
+int mem_pointers=0;	//all_feats_strings/hash
+int mem_pair=0;		//pairs in hash
+#endif
+
 //first load the files from step1
 void load_pre()
 {
@@ -43,10 +51,22 @@ void load_pre()
 	for(int i=0;i<num_feats;i++){
 		std::getline(fin,tmp);
 		string *add = new string(tmp);
+#ifdef MEMORY_DEBUG
+		mem_string += sizeof(tmp) + tmp.size();
+#endif
 #ifdef STEP2_TEST
-		all_features->insert(pair<string*, int>(add,i));
+		pair<string*, int> it = pair<string*, int>(add,i);
+		all_features->insert(it);
+#ifdef MEMORY_DEBUG
+		mem_pair += sizeof(it);
+		mem_num += sizeof(int);
+		mem_pointers += sizeof(string*);
+#endif
 #endif
 		all_feats_strings->push_back(add);
+#ifdef MEMORY_DEBUG
+		mem_pointers += sizeof(string*);
+#endif
 	}
 	fin.close();
 
@@ -54,8 +74,21 @@ void load_pre()
 		double a;
 		fin2 >> a;
 		all_score->push_back(a);
+#ifdef MEMORY_DEBUG
+		mem_pointers += sizeof(double);
+#endif
 	}
 	fin2.close();
+
+	//the used memory
+#ifdef MEMORY_DEBUG
+		cout << "Memory used(str,num,poi,pair):"
+				<< mem_string <<";" << mem_num <<";" << mem_pointers <<";" << mem_pair << '\n';
+		cout << "ALL " << mem_string + mem_num + mem_pointers + mem_pair << '\n';
+#ifdef STEP2_TEST
+		cout << "HashMap " << all_features->size() << endl;
+#endif
+#endif
 }
 
 }

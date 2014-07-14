@@ -27,6 +27,7 @@ int main2test()
 	writer->startWriting(CONF_output_file.c_str());
 
 	int count_now=0;
+	int miss_count=0;
 	DependencyInstance* x = reader->getNext();
 	while(x != NULL){
 		if(count_now%1000 == 0)
@@ -51,6 +52,10 @@ int main2test()
 			}
 		}
 		vector<int> *ret = decodeProjective(length,tmp_scores);
+		for(int i2=1;i2<length;i2++){	//ignore root
+			if((*ret)[i2] != (*(x->heads))[i2])
+				miss_count ++;
+		}
 		delete x->heads;
 		x->heads = ret;
 		writer->write(x);
@@ -64,8 +69,16 @@ int main2test()
 	delete writer;
 
 	//evaluate
+	cout << "Self-count miss is " << miss_count << endl;
 	string t;
 	DependencyEvaluator::evaluate(CONF_gold_file,CONF_output_file,t,false);
+
+#ifdef MEMORY_DEBUG
+	for(int i=0;i<=20;i++){
+		char *a = new char[1024*1024*100];	//100M
+		cout << i;
+	}
+#endif
 	return 0;
 }
 

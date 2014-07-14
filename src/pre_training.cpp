@@ -193,6 +193,13 @@ void pre_training_reading()
 			(*all_score)[iter->second] +=
 					(SCO_EACH_FEAT_INIT/2)*(1+((double)rand()/RAND_MAX));	//add scores(try random)
 			delete tmp;
+			//add negative
+			tmp = get_feature(x,i,head);
+			iter = all_features->find(tmp);
+			(*all_score)[iter->second] -=
+					(SCO_EACH_FEAT_INIT_NEG/2)*(1+((double)rand()/RAND_MAX));	//minus scores(try random)
+			delete tmp;
+
 		}
 		//adding instances
 		all_instance->push_back(x);
@@ -271,11 +278,27 @@ void pre_training_scoring()
 		//cout << time1 <<";" << time2 << ";" << time3 << ";" << time4 << '\n';
 	}
 	final_misses = all_miss;
-	cout << "Init miss rate is " << all_miss << "/" << tokens_size-all_size << '\n';
+	cout << "Init miss rate is " << all_miss << "/" << tokens_size << '\n';
 	cout << "-Through all sentence's time is " << clock()/1000 - time_start << " ms" << endl;
 
 	//iterate to get better scores
 	int iter=0;
+	int multiply_enlarge_time=0;
+	//--init iter numbers
+	if(SCO_WAY==2){
+		SCO_STEP = SCO_STEP_LOW;
+		SCO_CHANGE_AMOUNT = SCO_STEP_CHANGE;
+	}
+	else if(SCO_WAY==3){
+		SCO_STEP = SCO_STEP_HIGH;
+		SCO_CHANGE_AMOUNT = -1*SCO_STEP_CHANGE;
+	}
+	else{
+		cout << "No iterations." << endl;
+		delete []miss_for_each;
+		final_misses = all_miss;
+		return;
+	}
 	while(1){
 		int iter_starttime = clock()/1000;	//ms
 		cout << "Iteration " << iter << endl;
@@ -305,7 +328,7 @@ void pre_training_scoring()
 			int change_plus = 0;
 			int change_minus = 0;
 			//plus
-			*sco_iter += SCO_EACH_FEAT_ADJUST;
+			*sco_iter += SCO_STEP;
 			for(int i=0;i<num;i++){
 				int inst_index_tmp = (*rel_iter)[i];
 				DependencyInstance* inst = (*all_instance)[inst_index_tmp];
@@ -323,7 +346,7 @@ void pre_training_scoring()
 				delete ret;
 			}
 			//minus
-			*sco_iter -= 2*SCO_EACH_FEAT_ADJUST;
+			*sco_iter -= 2*SCO_STEP;
 			for(int i=0;i<num;i++){
 				int inst_index_tmp = (*rel_iter)[i];
 				DependencyInstance* inst = (*all_instance)[inst_index_tmp];
@@ -342,7 +365,7 @@ void pre_training_scoring()
 			}
 			//conclude and update
 			if(change_plus<0 && change_plus<=change_minus){//prefer plus
-				*sco_iter += 2*SCO_EACH_FEAT_ADJUST;
+				*sco_iter += 2*SCO_STEP;
 				changed_feat_score++;
 				reduce_miss_num -= change_plus;
 				for(int i=0;i<num;i++)
@@ -357,7 +380,7 @@ void pre_training_scoring()
 				all_miss += change_minus;
 			}
 			else{
-				*sco_iter += SCO_EACH_FEAT_ADJUST;
+				*sco_iter += SCO_STEP;
 			}
 			//clean
 			delete []miss_origin;
@@ -368,12 +391,24 @@ void pre_training_scoring()
 		//finish one iter
 		cout << "Finish iter " << iter << ":" << (clock()/1000-iter_starttime)/1000 << "s\n"<<
 			" -- changed feat scores " << changed_feat_score
-				<< ";miss rate is " << all_miss << "/" << tokens_size-all_size
+				<< ";miss rate is " << all_miss << "/" << tokens_size
 				<< ";reduce misses of "<< reduce_miss_num << endl;
-		if(changed_feat_score==0){	//break
-			cout << "ok, no changes yet" << endl;
-			final_misses = all_miss;
-			break;
+		if(1){	//break
+			//cout << "ok, small changes yet" << endl;
+			if(SCO_WAY==3 && changed_feat_score>=600){
+				cout << "good one for 3rd way, stick to it." << endl;
+			}
+			else if(multiply_enlarge_time < SCO_MAX_TIMES){
+				SCO_STEP += SCO_CHANGE_AMOUNT;
+				multiply_enlarge_time++;
+				cout << "Adjust amount for the " << multiply_enlarge_time << " time, now it's "
+						<<  SCO_STEP <<endl;
+			}
+			else if(changed_feat_score==0){
+				cout << "No changes, stop." << endl;
+				final_misses = all_miss;
+				break;
+			}
 		}
 		else{
 
@@ -431,7 +466,8 @@ void pre_training()
 			<< "Words: " << word_size << '\n'
 			<< "Feats: " << feat_size << '\n'
 			<< "ALL feats with rep: " << feat_size_with_rep <<'\n'
-			<< "Misses after iterations: " << final_misses <<endl;
+			<< "Misses after iterations: " << final_misses << '\n'
+			<< "Iteration way is " << SCO_WAY <<endl;
 	fout.close();
 	//-maps
 	fout.open(SCO_map_file.c_str(),ios::out|ios::trunc);

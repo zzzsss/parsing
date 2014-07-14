@@ -20,7 +20,11 @@ int CONF_train_word_map_size = 50000;
 
 //2.scores
 double SCO_EACH_FEAT_INIT=1;
-double SCO_EACH_FEAT_ADJUST=0.5;
+double SCO_EACH_FEAT_INIT_NEG=1;
+
+double SCO_STEP;	//will change as time goes by
+double SCO_CHANGE_AMOUNT;
+//int SCO_ENLARGE_TRIGGER_CHANGE=20;
 
 string SCO_map_file = "score_map.list";
 string SCO_score_file = "score_score.list";

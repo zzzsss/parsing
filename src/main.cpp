@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include "pre_training.h"
+#include "common.h"
 
 int main1(int argc,char ** argv)
 {

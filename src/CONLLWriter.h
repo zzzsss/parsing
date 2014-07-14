@@ -10,9 +10,11 @@ using namespace std;
 
 class CONLLWriter{
 protected:
-	FILE* writer=0;
+	FILE* writer;
 public:
-	CONLLWriter(){}
+	CONLLWriter(){
+		writer = 0;
+	}
 	void write(DependencyInstance* x){
 		int length = (int)(x->forms->size());
 		string* str;
