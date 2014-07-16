@@ -34,4 +34,16 @@ string SCO_descript_file = "score_des.list";
 //----------------------------
 //step3 -- output
 std::string CONF_output_file = "output.txt";
-std::string CONF_gold_file = "train.right";
+std::string CONF_gold_file;	//from cmd
+std::string CONF_test_file; //from cmd
+
+
+//------------------------------
+//the training data for nn
+std::string CONF_wl_file = "vocab.list";	//wordlist
+string CONF_feat_bin = "x.bin";
+string CONF_score_bin = "y.bin";
+int CONF_X_dim = 6;
+int CONF_Y_dim = 1;
+
+string unknown_token = "<unk>";

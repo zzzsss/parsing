@@ -113,6 +113,22 @@ void print_feat_stat()
 	cout << endl;
 }
 
+void write_sentences()
+{
+	ofstream fout;
+	fout.open(SENTENCE_FILE,ios::out|ios::trunc);
+	int all_size = all_instance->size();
+	for(int i=0;i<all_size;i++){
+		DependencyInstance* inst = (*all_instance)[i];
+		int len = inst->forms->size();
+		for(int i=0;i<len-1;i++){
+			fout << *((*inst->forms)[i]) << " ";
+		}
+		fout << *((*inst->forms)[len-1]) << endl;
+	}
+	fout.close();
+}
+
 string* get_feature(DependencyInstance* x,int i,int j)
 {
 	vector<string*> list = *(x->forms);
@@ -220,6 +236,8 @@ void pre_training_reading()
 	//test-print
 	print_statistics();
 	//print_feat_stat();
+	//write the sentences for future use
+	write_sentences();
 }
 
 

@@ -17,7 +17,7 @@
 int main2test()
 {
 	using namespace training_space;
-	load_pre();
+	load_for_test();
 
 	//testing the training file
 	cout << "Now testing the train file..." << endl;

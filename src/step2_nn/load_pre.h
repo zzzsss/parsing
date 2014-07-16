@@ -24,7 +24,8 @@ extern int num_feats;
 extern vector<string*> *all_feats_strings;
 extern vector<double> *all_score;
 extern HashMap *all_features;
-void load_pre();
+void load_for_test();
+HashMap *load_wordlist(const char *fname);
 
 }
 

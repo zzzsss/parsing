@@ -6,11 +6,13 @@
  */
 
 #include "load_pre.h"
+#include "../cslm/Data.h"
 
 
 namespace training_space{
 
 //data for the training of nn
+//-- some for the test
 int num_feats=0;
 vector<string*> *all_feats_strings;
 vector<double> *all_score;
@@ -25,7 +27,7 @@ int mem_pair=0;		//pairs in hash
 #endif
 
 //first load the files from step1
-void load_pre()
+void load_for_test()
 {
 	int temp;
 	all_feats_strings = new vector<string*>();
@@ -89,6 +91,30 @@ void load_pre()
 		cout << "HashMap " << all_features->size() << endl;
 #endif
 #endif
+}
+
+HashMap *load_wordlist(const char *fname)
+{
+	//lists of the vocabularies
+	cout << "Opening vocab file '" << fname << "'" << endl;
+	ifstream ifs;
+	ifs.open(fname,ios::in);
+	CHECK_FILE(ifs,fname);
+	int num=0;
+	HashMap *res = new HashMap(CONF_train_word_map_size);
+	while (!ifs.eof()){
+		string buf;
+		ifs >> buf;
+		if (buf=="") continue; // HACK
+		string* tmp = new string(buf);
+		res->insert(pair<string*, int>(tmp, num++));
+	}
+	if(res->size() != num){
+		//sth wrong
+		Error("Something wrong with vocab file.");
+	}
+	cout << "Done with loading vocab, all is " << num << endl;
+	return res;
 }
 
 }

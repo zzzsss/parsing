@@ -44,13 +44,26 @@ extern std::string SCO_descript_file;
 //3.strings
 #define SENTENCE_START "<s>"
 #define SENTENCE_END "</s>"
+#define SENTENCE_FILE "sentences"
 
 //4.iterations
 //----------------------------
 
 //----------------------------
 //step2 -- training
+//(1)test
 #define STEP2_TEST
+//(2)transform
+extern std::string CONF_wl_file;
+extern std::string CONF_feat_bin;
+extern std::string CONF_score_bin;
+extern int CONF_X_dim;
+extern int CONF_Y_dim;
+extern std::string unknown_token;
+//(3)nn--cslm
+//#define BLAS_ATLAS
+#define BLAS_INTEL_MKL
+
 
 //------------------------------
 
@@ -58,13 +71,16 @@ extern std::string SCO_descript_file;
 //step3 -- output
 extern std::string CONF_output_file;
 extern std::string CONF_gold_file;
+extern std::string CONF_test_file;
 
 //------------------------------
 
 
 //z.which main (again forgive my laziness...)
-#define main1 main
+//#define main1 main
 //#define main2test main
+//#define main2trans main
 //#define main2 main
+#define main3 main
 
 #endif /* COMMMON_H_ */
