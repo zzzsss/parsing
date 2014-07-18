@@ -21,6 +21,8 @@
 #include <ctime>
 #include <vector>
 #include <fstream>
+#include "which_score.h"
+#include "which_main.h"
 
 using namespace std;
 
@@ -133,17 +135,18 @@ string* get_feature(DependencyInstance* x,int i,int j)
 {
 	vector<string*> list = *(x->forms);
 	// 2 words
-	/*
+#ifdef WHICH_TWO
 	string head = *(list[i]);
 	string modify = *(list[j]);
-	*/
+#endif
 	// 6 words
-
+#ifdef WHICH_SIX
 	int length = list.size()-1;
 	string head = ((i==0)?SENTENCE_START:*(list[i-1]))+" "+*(list[i])
 			+" "+((i==length)?SENTENCE_END:*(list[i+1]));
 	string modify = ((j==0)?SENTENCE_START:*(list[j-1]))+" "+*(list[j])
 					+" "+((j==length)?SENTENCE_END:*(list[j+1]));
+#endif
 
 	return new string(head+" "+modify);
 }
@@ -208,13 +211,18 @@ void pre_training_reading()
 			HashMap::iterator iter = all_features->find(tmp);
 			(*all_score)[iter->second] +=
 					(SCO_EACH_FEAT_INIT/2)*(1+((double)rand()/RAND_MAX));	//add scores(try random)
+			//constrain
+			if((*all_score)[iter->second] > CONSTRAIN_HIGH)
+				(*all_score)[iter->second] = CONSTRAIN_HIGH;
 			delete tmp;
 			//add negative
+			/*
 			tmp = get_feature(x,i,head);
 			iter = all_features->find(tmp);
 			(*all_score)[iter->second] -=
 					(SCO_EACH_FEAT_INIT_NEG/2)*(1+((double)rand()/RAND_MAX));	//minus scores(try random)
 			delete tmp;
+			*/
 
 		}
 		//adding instances

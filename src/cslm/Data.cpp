@@ -94,8 +94,8 @@ void Data::read_data(const char *p_x, const char *p_y,int in,int out,int total)
 	//now read datas
 	mem_inp = new REAL[idim*nb_totl];
 	mem_trg = new REAL[odim*nb_totl];
-	x.read((char*)mem_inp,idim*nb_totl);
-	y.read((char*)mem_trg,odim*nb_totl);
+	x.read((char*)mem_inp,idim*nb_totl*sizeof(REAL));
+	y.read((char*)mem_trg,odim*nb_totl*sizeof(REAL));
 
 	//ok
 	cout << "Init Data ok..." << endl;
@@ -143,7 +143,7 @@ void Data::write_array(const char *f,int total,int dim,REAL*a)
 	x.write((char*)&magic,sizeof(magic));
 	x.write((char*)&dim,sizeof(dim));
 	x.write((char*)&total,sizeof(total));
-	x.write((char*)a,dim*total);
+	x.write((char*)a,dim*total*sizeof(REAL));
 	x.close();
 }
 

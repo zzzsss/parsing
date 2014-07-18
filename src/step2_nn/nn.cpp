@@ -19,6 +19,7 @@ using namespace std;
 #include "../cslm/MachConfig.h"
 #include "../cslm/Trainer.h"
 #include "../cslm/ErrFctMSE.h"
+#include "../which_main.h"
 
 void usage (MachConfig &mc, bool do_exit=true)
 {

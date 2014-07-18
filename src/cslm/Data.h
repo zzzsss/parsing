@@ -55,6 +55,8 @@ public:
     // main functions to access data
   void Rewind();	// rewind to first example, performs resmplaing, shuffling etc if activated
   bool Next();		// advance to next example, return FALSE if at end
+
+  REAL* get_allinput() {return mem_inp;}
 };
 
 #endif

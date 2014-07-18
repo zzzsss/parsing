@@ -13,6 +13,7 @@
 #include "../Eisner.h"
 #include "../step3_eval/DependencyEvaluator.h"
 #include "../pre_training.h"
+#include "../which_main.h"
 
 int main2test()
 {

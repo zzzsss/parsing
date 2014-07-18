@@ -12,6 +12,7 @@
 #include <cstdio>
 #include "pre_training.h"
 #include "common.h"
+#include "which_main.h"
 
 int main1(int argc,char ** argv)
 {

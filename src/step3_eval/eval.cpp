@@ -25,6 +25,7 @@ using namespace std;
 #include "../Eisner.h"
 #include "DependencyEvaluator.h"
 #include "../pre_training.h"
+#include "../which_main.h"
 
 void usage2 (MachConfig &mc, bool do_exit=true)
 {
@@ -149,6 +150,18 @@ int main3(int argc, char *argv[])
 		for(int ii=0;ii<length;ii++){
 			for(int j=ii+1;j<length;j++){
 				for(int lr=0;lr<2;lr++){
+#ifdef WHICH_TWO
+					//2 word pair
+					if(lr==E_RIGHT){
+						*assign_x++ = (REAL)word_index[ii+1];
+						*assign_x++ = (REAL)word_index[j+1];
+					}
+					else{
+						*assign_x++ = (REAL)word_index[j+1];
+						*assign_x++ = (REAL)word_index[ii+1];
+					}
+#endif
+#ifdef WHICH_SIX
 					//build mach_x : 6 words group(h-1 h h+1 m-1 m m+1)
 					if(lr==E_RIGHT){
 						*assign_x++ = (REAL)word_index[ii];
@@ -166,6 +179,7 @@ int main3(int argc, char *argv[])
 						*assign_x++ = (REAL)word_index[ii+1];
 						*assign_x++ = (REAL)word_index[ii+2];
 					}
+#endif
 				}
 			}
 		}
@@ -176,6 +190,10 @@ int main3(int argc, char *argv[])
 			for(int j=ii+1;j<length;j++){
 				for(int lr=0;lr<2;lr++){
 					int index = get_index2(length,ii,j,lr);
+#ifdef ULTIMATE_DEBUG
+					cout << ii << "to" << j << ((lr==E_RIGHT)?'r':'l')
+							<< ":" << *assign_y << endl;
+#endif
 					tmp_scores[index] = *assign_y++;
 				}
 			}
@@ -186,8 +204,7 @@ int main3(int argc, char *argv[])
 			if((*ret)[i2] != (*(x->heads))[i2])
 				miss_count ++;
 		}
-#define EVAL_DEBUG
-#ifdef EVAL_DEBUG
+#ifdef ULTIMATE_DEBUG
 		{
 			double score_here=0;
 			double score_right=0;

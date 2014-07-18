@@ -10,6 +10,7 @@
 #include <fstream>
 #include <string>
 #include "../cslm/Data.h"
+#include "../which_main.h"
 using namespace std;
 using namespace training_space;
 

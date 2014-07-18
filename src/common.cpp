@@ -8,6 +8,7 @@
 #include "common.h"
 #include <string>
 #include <iostream>
+#include "which_main.h"
 using namespace std;
 
 
@@ -43,7 +44,13 @@ std::string CONF_test_file; //from cmd
 std::string CONF_wl_file = "vocab.list";	//wordlist
 string CONF_feat_bin = "x.bin";
 string CONF_score_bin = "y.bin";
+#ifdef WHICH_TWO
+int CONF_X_dim = 2;
+#endif
+#ifdef WHICH_SIX
 int CONF_X_dim = 6;
+#endif
 int CONF_Y_dim = 1;
+
 
 string unknown_token = "<unk>";
