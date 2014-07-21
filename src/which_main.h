@@ -25,9 +25,9 @@
 //#define main1 main26
 //#define main2test main26
 //#define main2trans main26
-//#define main2 main26
+#define main2 main26
 //#define main3 main26
-#define main3test main26
+//#define main3test main26
 
 
 

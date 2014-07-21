@@ -185,7 +185,7 @@ void pre_training_reading()
 						tmp_feat_index[get_index2(length,i,j,lr)] = feat_size;
 						feat_size++;
 						all_feats->push_back(tmp_str);
-						all_score->push_back(0.0);
+						all_score->push_back(CONSTRAIN_LOW);
 						all_feat_instance->push_back(vector<int>());
 						all_feat_instance->back().push_back(all_instance->size());//add current
 #ifdef MEMORY_DEBUG
@@ -210,7 +210,7 @@ void pre_training_reading()
 			string* tmp = get_feature(x,head,i);
 			HashMap::iterator iter = all_features->find(tmp);
 			(*all_score)[iter->second] +=
-					(SCO_EACH_FEAT_INIT/2)*(1+((double)rand()/RAND_MAX));	//add scores(try random)
+					(SCO_STEP_CHANGE/2)*(1+((double)rand()/RAND_MAX));	//add scores(try random)
 			//constrain
 			if((*all_score)[iter->second] > CONSTRAIN_HIGH)
 				(*all_score)[iter->second] = CONSTRAIN_HIGH;

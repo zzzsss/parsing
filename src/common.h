@@ -45,8 +45,8 @@ extern int CONF_X_dim;
 extern int CONF_Y_dim;
 extern std::string unknown_token;
 //(3)nn--cslm
-//#define BLAS_ATLAS
-#define BLAS_INTEL_MKL
+#define BLAS_ATLAS
+//#define BLAS_INTEL_MKL
 
 
 //------------------------------

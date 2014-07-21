@@ -21,12 +21,12 @@ extern double SCO_CHANGE_AMOUNT;
 //extern int SCO_ENLARGE_TRIGGER_CHANGE;
 #define SCO_STEP_HIGH 5.0
 #define SCO_STEP_LOW 0.5
-#define SCO_STEP_CHANGE 0.5
 #define SCO_MAX_TIMES 9
 
 //constrain the scores
-#define CONSTRAIN_HIGH 1.25
-#define CONSTRAIN_LOW -10
+#define CONSTRAIN_HIGH 0.9
+#define CONSTRAIN_LOW -0.9
+#define SCO_STEP_CHANGE 1.9
 
 
 #endif /* WHICH_SCORE_H_ */

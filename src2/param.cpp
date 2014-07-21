@@ -25,4 +25,4 @@ int CONF_X_dim = 6;
 #endif
 int CONF_Y_dim = 1;
 
-string ASCII_traindata_index = "train_index_score.data";
+string ASCII_traindata_index = "train_index_score.data.update";

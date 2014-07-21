@@ -6,6 +6,7 @@
  */
 
 #include "param.h"
+#include <sstream>
 
 //--------------------1.get word-list---------------------------
 HashMap *load_wordlist(const char *fname)
@@ -85,9 +86,10 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 	HashMap all_features(CONF_train_feat_map_size);
 	vector<int> all_feat_freq;
 	vector<int> all_feat_ashead;
-	//vector<string* > all_feat_str;
-	vector<vector<int>* > all_feat_windex;
+	vector<string* > all_feat_str;
+	//vector<vector<int>* > all_feat_windex;
 
+	//read all
 	DependencyInstance* x = reader->getNext();
 	int sentence_count=0,feat_count=0,tokens_count=0;
 	while(x != NULL){
@@ -96,21 +98,6 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 			cout << "--Reading sentence " << sentence_count << endl;
 		int length = x->forms->size();
 		tokens_count += length;
-		//--get all the index of the sentence
-		int* word_index = new int[length+2];	//including <s> and </s>
-		string sen_s = SENTENCE_START;
-		string sen_e = SENTENCE_END;
-		string unknown_token = UNKNOW_WORD;
-		for(int i=0;i<length;i++){
-			HashMap::iterator iter = wl->find(x->forms->at(i));
-			if(iter == wl->end()){
-				word_index[i+1] = wl->find(&unknown_token)->second;
-			}
-			else
-				word_index[i+1] = iter->second;
-		}
-		word_index[0] = wl->find(&sen_s)->second;
-		word_index[length+1] = wl->find(&sen_e)->second;
 		//--deal with all pairs
 		for(int i=0;i<length;i++){
 			for(int j=i+1;j<length;j++){
@@ -125,17 +112,10 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 					HashMap::iterator iter = all_features.find(tmp_str);
 					if(iter == all_features.end()){
 						all_features.insert(pair<string*, int>(tmp_str, feat_count));
-						//all_feat_str.push_back(tmp_str);
+						all_feat_str.push_back(tmp_str);
 						all_feat_freq.push_back(1);
 						all_feat_ashead.push_back(0);
 						feat_count++;
-						//adding the word index
-						vector<int>*tmp_vec = 0;
-						if(lr==E_LEFT)
-							tmp_vec = get_feature_index(word_index,j,i);
-						else
-							tmp_vec = get_feature_index(word_index,i,j);
-						all_feat_windex.push_back(tmp_vec);
 					}
 					else{
 						int where = iter->second;
@@ -145,7 +125,6 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 				}
 			}
 		}
-		delete []word_index;
 		//--add positive samples
 		for(int i=1;i<length;i++){
 			//add some scores first
@@ -170,14 +149,28 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 	cout << "-Transfering as binarys." << endl;
 	(*xbin) = new REAL[CONF_X_dim*feat_count];
 	(*ybin) = new REAL[CONF_Y_dim*feat_count];
+	string unknown_token = UNKNOW_WORD;
 	for(int i=0;i<feat_count;i++){
-		vector<int>* tmp_x = all_feat_windex[i];
-		for(int j=0;j<CONF_X_dim;j++)
-			(*xbin)[i*CONF_X_dim+j] = (*tmp_x)[j];
+		//get x
+		istringstream tmp_stream(*(all_feat_str.at(i)));
+		for(int j=0;j<CONF_X_dim;j++){
+			string tmp_find;
+			tmp_stream >> tmp_find;
+			REAL the_index=0;
+			HashMap::iterator iter = wl->find(&tmp_find);
+			if(iter == wl->end()){
+				cout << "--Strange word not find " << tmp_find << endl;
+				the_index = wl->find(&unknown_token)->second;
+			}
+			else
+				the_index = iter->second;
+			(*xbin)[j+i*CONF_X_dim] = the_index;
+		}
+		//get y
 		for(int j=0;j<CONF_Y_dim;j++){
 			//get the scores --- 0~1
 			const int THE_UP_LIMIT = 5;
-			const REAL SCO_INIT = -0.8;
+			const REAL SCO_INIT = -0.9;
 			const REAL SCO_STEP = 1.8;
 			const REAL SCO_MAX = 0.9;
 
@@ -189,6 +182,10 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 			REAL tmp = SCO_INIT;
 			for(int k=0;k<how_many;k++){
 				tmp += (SCO_STEP/2)*(1+((double)rand()/RAND_MAX));
+				if(tmp>SCO_MAX){
+					tmp = SCO_MAX;
+					break;
+				}
 			}
 			(*ybin)[it] = tmp;
 		}
@@ -204,8 +201,8 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 
 	//cleanup
 	for(int i=0;i<feat_count;i++){
-		//delete all_feat_str[i];
-		delete all_feat_windex[i];
+		delete all_feat_str[i];
+		//delete all_feat_windex[i];
 	}
 	cout << "------2.Done with train file '" << fname << "'" << endl;
 	return feat_count;
