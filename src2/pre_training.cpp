@@ -168,17 +168,9 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 		}
 		//get y
 		for(int j=0;j<CONF_Y_dim;j++){
-			//get the scores --- 0~1
-			const int THE_UP_LIMIT = 5;
-			const REAL SCO_INIT = -0.9;
-			const REAL SCO_STEP = 1.8;
-			const REAL SCO_MAX = 0.9;
-
 			//scoring method
 			int it = i*CONF_Y_dim+j;
 			int how_many = all_feat_ashead[it];
-			if(how_many>=THE_UP_LIMIT)
-				how_many=THE_UP_LIMIT;
 			REAL tmp = SCO_INIT;
 			for(int k=0;k<how_many;k++){
 				tmp += (SCO_STEP/2)*(1+((double)rand()/RAND_MAX));
@@ -195,7 +187,7 @@ int load_trainfile(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 #ifdef DEBUG_PRETRAINING
 	extern void debug_pretraining_write(REAL* ,REAL* ,int );
 	extern void debug_pretraining_evaluate(int ,REAL*,HashMap*);
-	debug_pretraining_write(*xbin,*ybin,feat_count);
+	//debug_pretraining_write(*xbin,*ybin,feat_count);
 	debug_pretraining_evaluate(feat_count,*ybin,&all_features);
 #endif
 

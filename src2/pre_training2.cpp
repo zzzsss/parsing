@@ -10,21 +10,9 @@
  * 			sorry that all the functions are gathered here for convenience
  */
 
-#include "pre_training.h"
-#include "CONLLReader.h"
-#include "DependencyInstance.h"
-#include "common.h"
-#include "HashMap.h"
-#include "Eisner.h"
-#include <cstdlib>
-#include <cstdio>
-#include <ctime>
-#include <vector>
-#include <fstream>
-#include "which_score.h"
-#include "which_main.h"
-
-using namespace std;
+#include "param.h"
+#include <sstream>
+extern void debug_pretraining_evaluate(int num,REAL* scores,HashMap* maps);
 
 namespace pre_training_space{
 //data
@@ -34,8 +22,6 @@ vector<int*> *all_feat_index;
 
 //2.the features
 int feat_size=0;
-int feat_size_with_rep=0;
-int feat_string_len=0;
 HashMap *all_features;	//feat-str -> feat-index
 vector<string*>* all_feats;//feat-index -> feat-str
 vector<double>* all_score;
@@ -44,7 +30,6 @@ vector< vector<int> >* all_feat_instance;
 int final_misses = 0;
 
 //3.the words
-int word_size=0;
 HashMap *all_words;		//word-str -> word-index
 
 //4.other statistics
@@ -58,77 +43,15 @@ void pre_init()
 	all_features = new HashMap(CONF_train_feat_map_size);
 	all_feats = new vector<string*>();
 	all_score = new vector<double>();
-	all_words = new HashMap(CONF_train_word_map_size);
 	all_feat_instance = new vector<vector<int> >();
 }
+
 void print_statistics()
 {
 	cout << "Training data:\n"
 			<< "Sentences: " << all_instance->size() << '\n'
 			<< "Tokens: " << tokens_size << '\n'
-			<< "Words: " << word_size << '\n'
-			<< "Feats: " << feat_size << '\n'
-			<< "ALL feats with rep: " << feat_size_with_rep <<'\n'
-			<< "All feats str len: " << feat_string_len <<endl;
-}
-void print_feat_stat()
-{
-	//print the verbose stat of feats
-	int max = -1;
-	int max_score = -1;
-	vector<int> lens;
-	vector<int> lens_score;
-	for(int i=0;i<all_feat_instance->size();i++){
-		//rep
-		int s = (*all_feat_instance)[i].size();
-		if(s>max){
-			for(int j=0;j<s-max-1;j++)
-				lens.push_back(0);
-			lens.push_back(1);
-			max = s;
-		}
-		else
-			lens[s]++;
-		//score
-		int s2 = (*all_score)[i];
-		if(s2>max_score){
-			for(int j=0;j<s2-max_score-1;j++)
-				lens_score.push_back(0);
-			lens_score.push_back(1);
-			max_score = s2;
-		}
-		else
-			lens_score[s2]++;
-
-	}
-	//output
-	cout << "--Verbose info of feats:\n";
-	cout << "---feats repeat info:\n";
-	for(int i=0;i<=max;i++){
-		cout << i << ":" << lens[i] << " ";
-	}
-	cout << endl;
-	cout << "---feats scores info:\n";
-	for(int i=0;i<=max_score;i++){
-		cout << i << ":" << lens_score[i] << " ";
-	}
-	cout << endl;
-}
-
-void write_sentences()
-{
-	ofstream fout;
-	fout.open(SENTENCE_FILE,ios::out|ios::trunc);
-	int all_size = all_instance->size();
-	for(int i=0;i<all_size;i++){
-		DependencyInstance* inst = (*all_instance)[i];
-		int len = inst->forms->size();
-		for(int i=0;i<len-1;i++){
-			fout << *((*inst->forms)[i]) << " ";
-		}
-		fout << *((*inst->forms)[len-1]) << endl;
-	}
-	fout.close();
+			<< "Feats: " << feat_size << endl;
 }
 
 string* get_feature(DependencyInstance* x,int i,int j)
@@ -160,13 +83,10 @@ void pre_training_reading()
 	pre_init();
 	DependencyInstance* x = reader->getNext();
 	while(x != NULL){
-#ifdef VERBOSE_DEBUG
-		if(all_instance->size() % 1000 == 0)
+		if(all_instance->size() % 3000 == 0)
 			cout << "Reading sentence " << all_instance->size() << endl;
-#endif
 		int length = x->forms->size();
 		tokens_size += length - 1;	//excluding root
-		feat_size_with_rep += length*length*2;
 		//adding features(pairs)
 		int *tmp_feat_index = new int[length*length*2];
 		for(int i=0;i<length;i++){
@@ -185,12 +105,9 @@ void pre_training_reading()
 						tmp_feat_index[get_index2(length,i,j,lr)] = feat_size;
 						feat_size++;
 						all_feats->push_back(tmp_str);
-						all_score->push_back(CONSTRAIN_LOW);
+						all_score->push_back(SCO_INIT);
 						all_feat_instance->push_back(vector<int>());
 						all_feat_instance->back().push_back(all_instance->size());//add current
-#ifdef MEMORY_DEBUG
-						feat_string_len += tmp_str->length();
-#endif
 					}
 					else{
 						int ttt = iter->second;
@@ -199,9 +116,6 @@ void pre_training_reading()
 							//no repeat
 							(*all_feat_instance)[ttt].push_back(all_instance->size());
 						}
-#ifdef MEMORY_DEBUG
-						feat_string_len += tmp_str->length();
-#endif
 						delete tmp_str;
 					}
 				}
@@ -213,44 +127,22 @@ void pre_training_reading()
 			string* tmp = get_feature(x,head,i);
 			HashMap::iterator iter = all_features->find(tmp);
 			(*all_score)[iter->second] +=
-					(SCO_STEP_CHANGE/2)*(1+((double)rand()/RAND_MAX));	//add scores(try random)
+					(SCO_STEP/2)*(1+((double)rand()/RAND_MAX));	//add scores(try random)
 			//constrain
-			if((*all_score)[iter->second] > CONSTRAIN_HIGH)
-				(*all_score)[iter->second] = CONSTRAIN_HIGH;
+			if((*all_score)[iter->second] > SCO_MAX)
+				(*all_score)[iter->second] = SCO_MAX;
 			delete tmp;
-			//add negative
-			/*
-			tmp = get_feature(x,i,head);
-			iter = all_features->find(tmp);
-			(*all_score)[iter->second] -=
-					(SCO_EACH_FEAT_INIT_NEG/2)*(1+((double)rand()/RAND_MAX));	//minus scores(try random)
-			delete tmp;
-			*/
-
 		}
 		//adding instances
 		all_instance->push_back(x);
 		all_feat_index->push_back(tmp_feat_index);
-		//adding words
-		for(int i=0;i<length;i++){
-			string* tmp_s = ((*x->forms)[i]);
-			HashMap::iterator iter = all_words->find(tmp_s);
-			if(iter == all_words->end()){
-				all_words->insert(pair<string*, int>(tmp_s, word_size));
-				word_size++;
-			}
-		}
 		//next
 		x = reader->getNext();
 	}
 	delete reader;
 	//test-print
 	print_statistics();
-	//print_feat_stat();
-	//write the sentences for future use
-	write_sentences();
 }
-
 
 //get the score
 double * get_score_once(int inst_index,DependencyInstance* inst)
@@ -267,15 +159,28 @@ double * get_score_once(int inst_index,DependencyInstance* inst)
 			}
 		}
 	}
-
-	/*
-	for(int ii=0;ii<length*length*2;ii++){
-		int index = (inst_ind)[ii];
-		if(index>=0 && index<feat_size)
-			tmp_scores[ii] = (*all_score)[index];
-	}
-	*/
 	return tmp_scores;
+}
+
+void check_all_sentences_miss()
+{
+	int all_size = all_instance->size();
+	int all_miss=0;
+	for(int i=0;i<all_size;i++){
+		DependencyInstance* inst = (*all_instance)[i];
+		int length = inst->forms->size();
+		double *tmp_scores = get_score_once(i,inst);
+		vector<int> *ret = decodeProjective(length,tmp_scores);
+		int count=0;
+		for(int i2=1;i2<length;i2++){	//ignore root
+			if((*ret)[i2] != (*(inst->heads))[i2])
+				count ++;
+		}
+		all_miss += count;
+		delete []tmp_scores;
+		delete ret;
+	}
+	cout << "Checking for miss rate is " << all_miss << "/" << tokens_size << '\n';
 }
 
 //Step2 --- scoring
@@ -314,24 +219,10 @@ void pre_training_scoring()
 	int iter=0;
 	int multiply_enlarge_time=0;
 	//--init iter numbers
-	if(SCO_WAY==2){
-		SCO_STEP = SCO_STEP_LOW;
-		SCO_CHANGE_AMOUNT = SCO_STEP_CHANGE;
-	}
-	else if(SCO_WAY==3){
-		SCO_STEP = SCO_STEP_HIGH;
-		SCO_CHANGE_AMOUNT = -1*SCO_STEP_CHANGE;
-	}
-	else{
-		cout << "No iterations." << endl;
-		delete []miss_for_each;
-		final_misses = all_miss;
-		return;
-	}
+	REAL current_adjust_amount = ADJ_INIT;
 	while(1){
 		int iter_starttime = clock()/1000;	//ms
 		cout << "Iteration " << iter << endl;
-
 		//for each feature(pair)
 		//--iteration varaiables
 		int f=0;
@@ -344,7 +235,8 @@ void pre_training_scoring()
 		for(;rel_iter!=all_feat_instance->end();rel_iter++,sco_iter++){
 			if(f%10000 == 0){
 				cout << "Now " << (double)f/feat_size*100 << "% in "
-						<< clock()/1000-iter_time_fine << "ms" << endl;
+						<< clock()/1000-iter_time_fine << "ms"
+						<< "Till now Reduce " << reduce_miss_num << endl;
 				iter_time_fine = clock()/1000;
 			}
 			//the relative instances
@@ -357,44 +249,50 @@ void pre_training_scoring()
 			int change_plus = 0;
 			int change_minus = 0;
 			//plus
-			*sco_iter += SCO_STEP;
-			for(int i=0;i<num;i++){
-				int inst_index_tmp = (*rel_iter)[i];
-				DependencyInstance* inst = (*all_instance)[inst_index_tmp];
-				int length = inst->forms->size();
-				double *tmp_scores = get_score_once(inst_index_tmp,inst);
-				vector<int> *ret = decodeProjective(length,tmp_scores);
-				int count=0;
-				for(int i2=1;i2<length;i2++){	//ignore root
-					if((*ret)[i2] != (*(inst->heads))[i2])
-						count ++;
+			if(*sco_iter + current_adjust_amount <= SCO_MAX){
+				*sco_iter += current_adjust_amount;
+				for(int i=0;i<num;i++){
+					int inst_index_tmp = (*rel_iter)[i];
+					DependencyInstance* inst = (*all_instance)[inst_index_tmp];
+					int length = inst->forms->size();
+					double *tmp_scores = get_score_once(inst_index_tmp,inst);
+					vector<int> *ret = decodeProjective(length,tmp_scores);
+					int count=0;
+					for(int i2=1;i2<length;i2++){	//ignore root
+						if((*ret)[i2] != (*(inst->heads))[i2])
+							count ++;
+					}
+					miss_plus[i] = count;
+					change_plus += (count - miss_origin[i]);
+					delete []tmp_scores;
+					delete ret;
 				}
-				miss_plus[i] = count;
-				change_plus += (count - miss_origin[i]);
-				delete []tmp_scores;
-				delete ret;
+				*sco_iter -= current_adjust_amount;
 			}
 			//minus
-			*sco_iter -= 2*SCO_STEP;
-			for(int i=0;i<num;i++){
-				int inst_index_tmp = (*rel_iter)[i];
-				DependencyInstance* inst = (*all_instance)[inst_index_tmp];
-				int length = inst->forms->size();
-				double *tmp_scores = get_score_once(inst_index_tmp,inst);
-				vector<int> *ret = decodeProjective(length,tmp_scores);
-				int count=0;
-				for(int i2=1;i2<length;i2++){	//ignore root
-					if((*ret)[i2] != (*(inst->heads))[i2])
-						count ++;
+			if(*sco_iter - current_adjust_amount >= SCO_INIT){
+				*sco_iter -= current_adjust_amount;
+				for(int i=0;i<num;i++){
+					int inst_index_tmp = (*rel_iter)[i];
+					DependencyInstance* inst = (*all_instance)[inst_index_tmp];
+					int length = inst->forms->size();
+					double *tmp_scores = get_score_once(inst_index_tmp,inst);
+					vector<int> *ret = decodeProjective(length,tmp_scores);
+					int count=0;
+					for(int i2=1;i2<length;i2++){	//ignore root
+						if((*ret)[i2] != (*(inst->heads))[i2])
+							count ++;
+					}
+					miss_minus[i] = count;
+					change_minus += (count - miss_origin[i]);
+					delete []tmp_scores;
+					delete ret;
 				}
-				miss_minus[i] = count;
-				change_minus += (count - miss_origin[i]);
-				delete []tmp_scores;
-				delete ret;
+				*sco_iter += current_adjust_amount;
 			}
 			//conclude and update
 			if(change_plus<0 && change_plus<=change_minus){//prefer plus
-				*sco_iter += 2*SCO_STEP;
+				*sco_iter += current_adjust_amount;
 				changed_feat_score++;
 				reduce_miss_num -= change_plus;
 				for(int i=0;i<num;i++)
@@ -402,6 +300,7 @@ void pre_training_scoring()
 				all_miss += change_plus;
 			}
 			else if(change_minus<0 && change_plus>=change_minus){
+				*sco_iter -= current_adjust_amount;
 				changed_feat_score++;
 				reduce_miss_num -= change_minus;
 				for(int i=0;i<num;i++)
@@ -409,7 +308,7 @@ void pre_training_scoring()
 				all_miss += change_minus;
 			}
 			else{
-				*sco_iter += SCO_STEP;
+				//no change
 			}
 			//clean
 			delete []miss_origin;
@@ -418,20 +317,17 @@ void pre_training_scoring()
 			f++;
 		}
 		//finish one iter
+		check_all_sentences_miss();
 		cout << "Finish iter " << iter << ":" << (clock()/1000-iter_starttime)/1000 << "s\n"<<
 			" -- changed feat scores " << changed_feat_score
 				<< ";miss rate is " << all_miss << "/" << tokens_size
 				<< ";reduce misses of "<< reduce_miss_num << endl;
 		if(1){	//break
 			//cout << "ok, small changes yet" << endl;
-			if(SCO_WAY==3 && changed_feat_score>=600){
-				cout << "good one for 3rd way, stick to it." << endl;
+			if(reduce_miss_num > 500){
 			}
-			else if(multiply_enlarge_time < SCO_MAX_TIMES){
-				SCO_STEP += SCO_CHANGE_AMOUNT;
-				multiply_enlarge_time++;
-				cout << "Adjust amount for the " << multiply_enlarge_time << " time, now it's "
-						<<  SCO_STEP <<endl;
+			else if(current_adjust_amount > ADJ_END){
+				current_adjust_amount += ADJ_STEP;
 			}
 			else if(changed_feat_score==0){
 				cout << "No changes, stop." << endl;
@@ -439,11 +335,7 @@ void pre_training_scoring()
 				break;
 			}
 		}
-		else{
-
-		}
 		iter++;
-
 	}
 	//clean
 	delete []miss_for_each;
@@ -464,12 +356,13 @@ void pre_training_clean1()
 	}
 	delete all_feats;
 	delete all_features;
-	delete all_words;
 	delete all_score;
 }
 
-void pre_training()
+int pre_training(const char* fname,HashMap* wl,REAL** xbin,REAL** ybin)
 {
+	//0.all the words
+	all_words = wl;
 	//1. read-in the data
 	int time1 = clock() / (CLOCKS_PER_SEC);
 	cout << "---Reading train-file start:" << endl;
@@ -484,36 +377,41 @@ void pre_training()
 	cout << "---Scoring train-file finish: in "
 			<< (clock() / (1000) - time2)/1000 << " s" << endl;
 
-	//3. storing the result
-	cout << "Storing the result..." << endl;
-	ofstream fout;
-	//-description file
-	fout.open(SCO_descript_file.c_str(),ios::out|ios::trunc);
-	fout << "Training data description:\n"
-			<< "Sentences: " << all_instance->size() << '\n'
-			<< "Tokens: " << tokens_size << '\n'
-			<< "Words: " << word_size << '\n'
-			<< "Feats: " << feat_size << '\n'
-			<< "ALL feats with rep: " << feat_size_with_rep <<'\n'
-			<< "Misses after iterations: " << final_misses << '\n'
-			<< "Iteration way is " << SCO_WAY <<endl;
-	fout.close();
-	//-maps
-	fout.open(SCO_map_file.c_str(),ios::out|ios::trunc);
-	fout << feat_size <<'\n';
-	for(int i=0;i<feat_size;i++)
-		fout << *((*all_feats)[i]) << '\n';
-	fout.close();
-	//scores
-	fout.open(SCO_score_file.c_str(),ios::out|ios::trunc);
-	fout << feat_size <<'\n';
-	for(int i=0;i<feat_size;i++)
-		fout << (*all_score)[i] << '\n';
-	fout.close();
+	//3.change to binary
+	//maybe calculating
+	cout << "-Transfering as binarys." << endl;
+	(*xbin) = new REAL[CONF_X_dim*feat_size];
+	(*ybin) = new REAL[CONF_Y_dim*feat_size];
+	string unknown_token = UNKNOW_WORD;
+	for(int i=0;i<feat_size;i++){
+		//get x
+		istringstream tmp_stream(*(all_feats->at(i)));
+		for(int j=0;j<CONF_X_dim;j++){
+			string tmp_find;
+			tmp_stream >> tmp_find;
+			REAL the_index=0;
+			HashMap::iterator iter = wl->find(&tmp_find);
+			if(iter == wl->end()){
+				cout << "--Strange word not find " << tmp_find << endl;
+				the_index = wl->find(&unknown_token)->second;
+			}
+			else
+				the_index = iter->second;
+			(*xbin)[j+i*CONF_X_dim] = the_index;
+		}
+		//get y
+		for(int j=0;j<CONF_Y_dim;j++){
+			(*ybin)[i*CONF_Y_dim+j] = all_score->at(i*CONF_Y_dim+j);
+		}
+	}
+
+#ifdef DEBUG_PRETRAINING
+	debug_pretraining_evaluate(feat_size,*ybin,all_features);
+#endif
 
 	//4.clean up
 	pre_training_clean1();
-	return;
+	return feat_size;
 }
 }
 
