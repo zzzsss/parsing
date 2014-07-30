@@ -1,3 +1,7 @@
 This is the working files for the parsing project for this summer.
 It will start at 2014.6.30 and end at ???.
 
+src_before: at very beginning
+src: the origin one as the whole, but now not use...
+src2: pre_training-part
+src3: eval-part and trans of pre_training for softmax-way
