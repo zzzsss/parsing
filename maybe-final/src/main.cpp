@@ -7,6 +7,17 @@
 
 #include "common.h"
 
+string SENTENCE_START = "<s>";
+string SENTENCE_END = "</s>";
+string SENTENCE_START_2 = "<ss>";
+string SENTENCE_END_2 = "</ss>";
+string WORD_UNKNOWN = "<unk>";
+string POS_START = "<s-POS>";
+string POS_END = "</s-POS>";
+string POS_START_2 = "<ss-POS>";
+string POS_END_2 = "</ss-POS>";
+string POS_UNKNOWN = "<unk-POS>";
+
 //-------------------Configurations---------------
 namespace parsing_conf{
 //1.pre-training
@@ -19,7 +30,8 @@ string CONF_gold_file="test.right";	//golden files
 string CONF_mach_file;	//mach name
 //3.both
 string CONF_vocab_file="vocab.list";	//output of pre and input of eval
-int CONF_if_consider_pos=0;
+int CONF_vocab_out=0;	//outside vocab...
+int CONF_if_consider_pos=1;	//0 no;1 only word;2 add pos...	-- default 1
 int CONF_x_dim=6;			//the input dim to the nn 6 or 10--- default 6
 int IND_CONF_x_dim_final=6;
 int CONF_x_dim_missing=-1;	//the missing one for the dimension(only missing one)
@@ -55,6 +67,8 @@ void read_conf(const char* file)
 			fin >> CONF_y_class_size;
 		else if(buf=="vocab")
 			fin >> CONF_vocab_file;
+		else if(buf=="vocab-out")
+			CONF_vocab_out = 1;
 		else{fin.getline(line, DATA_LINE_LEN); continue;}
 	}
 	if(CONF_x_dim != 6 && CONF_x_dim != 10)
@@ -63,6 +77,8 @@ void read_conf(const char* file)
 		IND_CONF_x_dim_final = CONF_x_dim-1;
 	else
 		IND_CONF_x_dim_final = CONF_x_dim;
+	if(CONF_if_consider_pos==2)	//pos
+		IND_CONF_x_dim_final *= 2;
 
 	if(CONF_y_class_size==1)
 		CONF_if_y_calss = 0;
@@ -87,12 +103,14 @@ void init_parsing_conf(int argc,char ** argv)
 	cout << CONF_train_file << "\t" << CONF_data_file << "\t" << CONF_test_file << "\t" << CONF_output_file << '\t'
 			<< CONF_gold_file << "\t" << CONF_mach_file << "\t" << CONF_vocab_file << "\t"
 			<< CONF_if_consider_pos << "\t" << CONF_x_dim << "\t" << IND_CONF_x_dim_final << "\t"
-			<< CONF_x_dim_missing << "\t" << CONF_if_y_calss << "\t" << CONF_y_class_size << endl;
+			<< CONF_x_dim_missing << "\t" << CONF_if_y_calss << "\t" << CONF_y_class_size
+			<< ((CONF_vocab_out)?"Vocab-out":"Vocab-not-out") << endl;
 }
 }
 
 int main(int argc,char ** argv)
 {
+	srand(time(0));
 	parsing_conf::init_parsing_conf(argc,argv);
 #ifdef PARSING_PRE
 	pre_training();

@@ -35,8 +35,12 @@ HashMap *load_wordlist(const char *fname)
 //used when train_eval,final_eval...(need to delete later...)
 int *get_word_index(int length,DependencyInstance* x,HashMap* all_words,int *oov)
 {
-	string tmp_unknown = WORD_UNKNOWN;
-	int* word_index = new int[length+SENTENCE_EXTRA_NUM*2];	//including +4
+	int* word_index;
+	int size1 = (length+4);
+	if(CONF_if_consider_pos==2)
+		word_index = new int[size1*2];	//including +4; pos x 2
+	else
+		word_index = new int[size1];	//including +4
 	for(int i=0;i<length;i++){
 		//here we have to take care of the POS
 		string *to_find = CONF_if_consider_pos ? (x->combined_feats->at(i)) : x->forms->at(i);
@@ -44,33 +48,56 @@ int *get_word_index(int length,DependencyInstance* x,HashMap* all_words,int *oov
 		if(iter == all_words->end()){
 			if(oov)
 				(*oov) ++;
-			word_index[SENTENCE_EXTRA_NUM+i] = all_words->find(&tmp_unknown)->second;
+			word_index[2+i] = all_words->find(&WORD_UNKNOWN)->second;
 		}
 		else
-			word_index[SENTENCE_EXTRA_NUM+i] = iter->second;
+			word_index[2+i] = iter->second;
 	}
-	string sen_s = SENTENCE_START;
-	string sen_e = SENTENCE_END;
-	string sen_s2 = SENTENCE_START_2;
-	string sen_e2 = SENTENCE_END_2;
-	word_index[0] = all_words->find(&sen_s2)->second;
-	word_index[1] = all_words->find(&sen_s)->second;
-	word_index[length+2] = all_words->find(&sen_e)->second;
-	word_index[length+3] = all_words->find(&sen_e2)->second;
+	word_index[0] = all_words->find(&SENTENCE_START_2)->second;
+	word_index[1] = all_words->find(&SENTENCE_START)->second;
+	word_index[length+2] = all_words->find(&SENTENCE_END)->second;
+	word_index[length+3] = all_words->find(&SENTENCE_END_2)->second;
+
+	if(CONF_if_consider_pos==2){
+		for(int i=0;i<length;i++){
+			//here we have to take care of the POS
+			string *to_find = x->postags->at(i);
+			HashMap::iterator iter = all_words->find(to_find);
+			if(iter == all_words->end()){
+				cout << "Unusual unk pos-tag " << *to_find << endl;
+				word_index[2+i+size1] = all_words->find(&POS_UNKNOWN)->second;
+			}
+			else
+				word_index[2+i+size1] = iter->second;
+		}
+		word_index[size1] = all_words->find(&POS_START_2)->second;
+		word_index[size1+1] = all_words->find(&POS_START)->second;
+		word_index[size1+length+2] = all_words->find(&POS_END)->second;
+		word_index[size1+length+3] = all_words->find(&POS_END_2)->second;
+	}
 	return word_index;
 }
 
 //----------------3.get_feature-------------------------------------
-string* get_feature(DependencyInstance* x,int head,int modify,int* index)
+string* get_feature(int len,int head,int modify,int* index)
 {
 	//depends on configurations
 	//head first then modify
 	stringstream tmp;
+	int *index2 = index + len+4;
 	if(CONF_x_dim == 6){
 		for(int i=0;i<CONF_x_dim;i++){
 			if(i!=CONF_x_dim_missing){//not ignore it
 				int which = (i<3) ? (head+1+i) : (modify+i-2);
-				tmp << index[which] << '\t';
+				tmp << index[which] << ' ';
+			}
+		}
+		if(CONF_if_consider_pos==2){
+			for(int i=0;i<CONF_x_dim;i++){
+				if(i!=CONF_x_dim_missing){//not ignore it
+					int which = (i<3) ? (head+1+i) : (modify+i-2);
+					tmp << index2[which] << ' ';
+				}
 			}
 		}
 	}
@@ -78,7 +105,15 @@ string* get_feature(DependencyInstance* x,int head,int modify,int* index)
 		for(int i=0;i<CONF_x_dim;i++){
 			if(i!=CONF_x_dim_missing){//not ignore it
 				int which = (i<5) ? (head+i) : (modify+i-5);
-				tmp << index[which] << '\t';
+				tmp << index[which] << ' ';
+			}
+		}
+		if(CONF_if_consider_pos==2){
+			for(int i=0;i<CONF_x_dim;i++){
+				if(i!=CONF_x_dim_missing){//not ignore it
+					int which = (i<5) ? (head+i) : (modify+i-5);
+					tmp << index2[which] << ' ';
+				}
 			}
 		}
 	}
@@ -87,13 +122,22 @@ string* get_feature(DependencyInstance* x,int head,int modify,int* index)
 	return new string(tmp.str());
 }
 
-void fill_feature(int head,int modify,int* index,REAL* to_fill)
+void fill_feature(int len,int head,int modify,int* index,REAL* to_fill)
 {
+	int *index2 = index + len+4;
 	if(CONF_x_dim == 6){
 		for(int i=0;i<CONF_x_dim;i++){
 			if(i!=CONF_x_dim_missing){//not ignore it
 				int which = (i<3) ? (head+1+i) : (modify+i-2);
 				*to_fill++ = index[which];
+			}
+		}
+		if(CONF_if_consider_pos==2){
+			for(int i=0;i<CONF_x_dim;i++){
+				if(i!=CONF_x_dim_missing){//not ignore it
+					int which = (i<3) ? (head+1+i) : (modify+i-2);
+					*to_fill++ = index2[which];
+				}
 			}
 		}
 	}
@@ -102,6 +146,14 @@ void fill_feature(int head,int modify,int* index,REAL* to_fill)
 			if(i!=CONF_x_dim_missing){//not ignore it
 				int which = (i<5) ? (head+i) : (modify+i-5);
 				*to_fill++ = index[which];
+			}
+		}
+		if(CONF_if_consider_pos==2){
+			for(int i=0;i<CONF_x_dim;i++){
+				if(i!=CONF_x_dim_missing){//not ignore it
+					int which = (i<5) ? (head+i) : (modify+i-5);
+					*to_fill++ = index2[which];
+				}
 			}
 		}
 	}
@@ -131,9 +183,9 @@ void debug_pretraining_evaluate(REAL* scores,HashMap* maps,HashMap* wl)
 					int index = get_index2(length,ii,j,lr);
 					string *tmp_str = 0;
 					if(lr==E_LEFT)
-						tmp_str = get_feature(x,j,ii,word_index);
+						tmp_str = get_feature(length,j,ii,word_index);
 					else
-						tmp_str = get_feature(x,ii,j,word_index);
+						tmp_str = get_feature(length,ii,j,word_index);
 					//add it or already there
 					HashMap::iterator iter = maps->find(tmp_str);
 					int which = iter->second;

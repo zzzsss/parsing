@@ -28,19 +28,27 @@ using namespace std;
 //typedef float REAL;
 
 //--------------constants----------------------
-#define SENTENCE_EXTRA_NUM 2
-const string SENTENCE_START = "<s>";
-const string SENTENCE_END = "</s>";
-const string SENTENCE_START_2 = "<ss>";
-const string SENTENCE_END_2 = "</ss>";
-const string WORD_UNKNOWN = "<unk>";
+//#define SENTENCE_EXTRA_NUM 2
+extern string SENTENCE_START;
+extern string SENTENCE_END;
+extern string SENTENCE_START_2;
+extern string SENTENCE_END_2;
+extern string WORD_UNKNOWN;
+extern string POS_START;
+extern string POS_END;
+extern string POS_START_2;
+extern string POS_END_2;
+extern string POS_UNKNOWN;
 
 #define CONS_vocab_map_size 500000
+#define CONS_pos_map_size 10000
 #define CONS_feat_map_size 100000000
 //get the scores --- -0.9~+0.9
 const REAL SCO_INIT = -0.9;	//constrain low
 const REAL SCO_STEP = 1.8;
 const REAL SCO_MAX = 0.9;	//constrain high
+const REAL SCO_MAX_BOUND = 0.91;
+const REAL SCO_MIN_BOUNT = -0.91;
 //for score iterations
 const REAL ADJ_INIT = 0.5;
 const REAL ADJ_END = 0.09;
@@ -65,13 +73,15 @@ extern int CONF_x_dim_missing;	//the missing one for the dimension(only missing 
 extern int CONF_if_y_calss;	//if use the softmax to classify the output
 extern int CONF_y_class_size;	//how many classes of y(only if before one is true)
 
+extern int CONF_vocab_out;
+
 }
 
 //functions
 HashMap *load_wordlist(const char *fname);
 int *get_word_index(int length,DependencyInstance* x,HashMap* all_words,int *oov);
-string* get_feature(DependencyInstance* x,int head,int modify,int* index);
-void fill_feature(int head,int modify,int* index,REAL* to_fill);
+string* get_feature(int len,int head,int modify,int* index);
+void fill_feature(int len,int head,int modify,int* index,REAL* to_fill);
 void debug_pretraining_evaluate(REAL* scores,HashMap* maps,HashMap* wl);
 void eval();
 void pre_training();

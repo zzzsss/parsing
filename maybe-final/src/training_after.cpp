@@ -76,9 +76,9 @@ void eval()
 				for(int lr=0;lr<2;lr++){
 					//build mach_x
 					if(lr==E_RIGHT)
-						fill_feature(ii,j,word_index,assign_x);
+						fill_feature(length,ii,j,word_index,assign_x);
 					else
-						fill_feature(j,ii,word_index,assign_x);
+						fill_feature(length,j,ii,word_index,assign_x);
 					assign_x += IND_CONF_x_dim_final;
 				}
 			}
