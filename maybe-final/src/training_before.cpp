@@ -42,7 +42,7 @@ void pre_training()
 		all_words.insert(pair<string*, int>(&SENTENCE_START_2,words_count++));
 		all_words.insert(pair<string*, int>(&SENTENCE_END_2,words_count++));
 		all_words.insert(pair<string*, int>(&WORD_UNKNOWN,words_count++));
-		if(CONF_if_consider_pos==2){
+		if(CONF_if_consider_pos & 0x2){
 			//add pos info...
 			all_pos_str.push_back(&POS_START);
 			all_pos_str.push_back(&POS_END);
@@ -62,16 +62,16 @@ void pre_training()
 			int length = x->forms->size();
 			//words
 			for(int i=0;i<length;i++){
-				//here we have to take care of the POS(here is the mode 1 or 2 --- add behind words)
-				string *to_find = CONF_if_consider_pos ? (x->combined_feats->at(i)) : x->forms->at(i);
+				//here we have to take care of the POS(here is the mode 1 or 3 --- add behind words)
+				string *to_find = (CONF_if_consider_pos & 0x1) ? (x->combined_feats->at(i)) : x->forms->at(i);
 				HashMap::iterator iter = all_words.find(to_find);
 				if(iter == all_words.end()){
 					string* new_one = new string(*to_find);
 					all_words.insert(pair<string*, int>(new_one,words_count++));
 					all_word_str.push_back(new_one);
 				}
-				//here is only in mode 2
-				if(CONF_if_consider_pos==2){
+				//here is only in mode 2 or 3
+				if(CONF_if_consider_pos & 0x2){
 					string *to_find = x->postags->at(i);
 					HashMap::iterator iter = all_poss.find(to_find);
 					if(iter == all_poss.end()){
@@ -86,7 +86,7 @@ void pre_training()
 		}
 		cout << "Done, words: "<< words_count << ",pos: " << pos_count << ",all" << words_count+pos_count << endl;
 		//1.8 mix words and pos --- all to words...
-		if(CONF_if_consider_pos==2){
+		if(CONF_if_consider_pos & 0x2){
 			for(int i=0;i<pos_count;i++){
 				string* tmp = all_pos_str.at(i);
 				all_words.insert(pair<string*, int>(tmp,words_count++));

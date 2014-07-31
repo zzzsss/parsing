@@ -31,7 +31,7 @@ string CONF_mach_file;	//mach name
 //3.both
 string CONF_vocab_file="vocab.list";	//output of pre and input of eval
 int CONF_vocab_out=0;	//outside vocab...
-int CONF_if_consider_pos=1;	//0 no;1 only word;2 add pos...	-- default 1
+int CONF_if_consider_pos=0;	//0:no;1:word+pos;2:add pos;3:both	-- default 1
 int CONF_x_dim=6;			//the input dim to the nn 6 or 10--- default 6
 int IND_CONF_x_dim_final=6;
 int CONF_x_dim_missing=-1;	//the missing one for the dimension(only missing one)
@@ -77,7 +77,7 @@ void read_conf(const char* file)
 		IND_CONF_x_dim_final = CONF_x_dim-1;
 	else
 		IND_CONF_x_dim_final = CONF_x_dim;
-	if(CONF_if_consider_pos==2)	//pos
+	if(CONF_if_consider_pos & 0x2)	//pos
 		IND_CONF_x_dim_final *= 2;
 
 	if(CONF_y_class_size==1)

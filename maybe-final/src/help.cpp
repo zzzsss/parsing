@@ -37,13 +37,13 @@ int *get_word_index(int length,DependencyInstance* x,HashMap* all_words,int *oov
 {
 	int* word_index;
 	int size1 = (length+4);
-	if(CONF_if_consider_pos==2)
+	if(CONF_if_consider_pos & 0x2)
 		word_index = new int[size1*2];	//including +4; pos x 2
 	else
 		word_index = new int[size1];	//including +4
 	for(int i=0;i<length;i++){
 		//here we have to take care of the POS
-		string *to_find = CONF_if_consider_pos ? (x->combined_feats->at(i)) : x->forms->at(i);
+		string *to_find = (CONF_if_consider_pos & 0x1) ? (x->combined_feats->at(i)) : x->forms->at(i);
 		HashMap::iterator iter = all_words->find(to_find);
 		if(iter == all_words->end()){
 			if(oov)
@@ -58,7 +58,7 @@ int *get_word_index(int length,DependencyInstance* x,HashMap* all_words,int *oov
 	word_index[length+2] = all_words->find(&SENTENCE_END)->second;
 	word_index[length+3] = all_words->find(&SENTENCE_END_2)->second;
 
-	if(CONF_if_consider_pos==2){
+	if(CONF_if_consider_pos & 0x2){
 		for(int i=0;i<length;i++){
 			//here we have to take care of the POS
 			string *to_find = x->postags->at(i);
@@ -92,7 +92,7 @@ string* get_feature(int len,int head,int modify,int* index)
 				tmp << index[which] << ' ';
 			}
 		}
-		if(CONF_if_consider_pos==2){
+		if(CONF_if_consider_pos & 0x2){
 			for(int i=0;i<CONF_x_dim;i++){
 				if(i!=CONF_x_dim_missing){//not ignore it
 					int which = (i<3) ? (head+1+i) : (modify+i-2);
@@ -108,7 +108,7 @@ string* get_feature(int len,int head,int modify,int* index)
 				tmp << index[which] << ' ';
 			}
 		}
-		if(CONF_if_consider_pos==2){
+		if(CONF_if_consider_pos & 0x2){
 			for(int i=0;i<CONF_x_dim;i++){
 				if(i!=CONF_x_dim_missing){//not ignore it
 					int which = (i<5) ? (head+i) : (modify+i-5);
@@ -132,7 +132,7 @@ void fill_feature(int len,int head,int modify,int* index,REAL* to_fill)
 				*to_fill++ = index[which];
 			}
 		}
-		if(CONF_if_consider_pos==2){
+		if(CONF_if_consider_pos & 0x2){
 			for(int i=0;i<CONF_x_dim;i++){
 				if(i!=CONF_x_dim_missing){//not ignore it
 					int which = (i<3) ? (head+1+i) : (modify+i-2);
@@ -148,7 +148,7 @@ void fill_feature(int len,int head,int modify,int* index,REAL* to_fill)
 				*to_fill++ = index[which];
 			}
 		}
-		if(CONF_if_consider_pos==2){
+		if(CONF_if_consider_pos & 0x2){
 			for(int i=0;i<CONF_x_dim;i++){
 				if(i!=CONF_x_dim_missing){//not ignore it
 					int which = (i<5) ? (head+i) : (modify+i-5);

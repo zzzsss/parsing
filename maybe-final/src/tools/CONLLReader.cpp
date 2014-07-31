@@ -56,7 +56,8 @@ DependencyInstance* CONLLReader::getNext(){
 		//the new form
 		vector<string*>* info = (*lineList)[i];
 		(*forms)[i + 1] = normalize((*info)[1]);
-		(*pos)[i + 1] = new string(*((*info)[4]));
+		//identify pos away ...
+		(*pos)[i + 1] = new string("_"+*((*info)[4]));
 		(*heads)[i + 1] = Util::stringToInt((*info)[8]);
 		vector<string*>::iterator iter;
 		for(iter = info->begin(); iter != info->end(); iter++){
