@@ -205,6 +205,13 @@ void pre_training()
 	//5.evaluate for testing
 	cout << "---4.testing it... " << endl;
 	debug_pretraining_evaluate(final_scores,&all_features,all_words);
+
+
+	//6.clean up
+	delete all_words;
+	delete []final_scores;
+	for(int i=0;i<all_feat_str.size();i++)
+		delete all_feat_str[i];
 	cout << "--Finish pre-training." << endl;
 	return;
 }

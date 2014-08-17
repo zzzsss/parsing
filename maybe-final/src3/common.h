@@ -74,6 +74,13 @@ extern int CONF_y_class_size;	//how many classes of y(only if before one is true
 extern int CONF_vocab_out;
 
 extern double CONF_score_expbase;
+extern int CONF_score_reverse;
+
+//nn: conf of the nn
+extern string CONF_NN_LRATE;
+extern string CONF_NN_LMULT;
+extern string CONF_NN_ITER;
+extern string CONF_NN_WD;
 
 }
 

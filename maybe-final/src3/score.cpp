@@ -53,6 +53,15 @@ REAL* count_scores(vector<int>& ashead)
 			}
 			the_classes[i] = curr_class;
 		}
+		//reverse version
+		if(CONF_score_reverse){
+			int* tmp_c = new int[stat.size()];
+			tmp_c[0] = 0;
+			for(int i=1;i<stat.size();i++)
+				tmp_c[i] = curr_class - the_classes[stat.size()-i] + 1;
+			delete [] the_classes;
+			the_classes = tmp_c;
+		}
 		for(int i=0;i<num;i++){
 			scores[i] = the_classes[ashead[i]];
 		}

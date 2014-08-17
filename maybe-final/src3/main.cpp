@@ -41,6 +41,13 @@ int CONF_y_class_size=5;	//how many classes of y(only if before one is true)
 
 //4.scores
 double CONF_score_expbase = -1;	//exp score classify base
+int CONF_score_reverse = 0;
+
+//nn: conf of the nn
+string CONF_NN_LRATE = "0.045";	//learning rate
+string CONF_NN_LMULT = "1e-9";
+string CONF_NN_ITER = "20";	//iteration
+string CONF_NN_WD = "3e-5";
 
 void read_conf(const char* file)
 {
@@ -73,6 +80,16 @@ void read_conf(const char* file)
 			fin >> CONF_vocab_file;
 		else if(buf=="exp")
 			fin >> CONF_score_expbase;
+		else if(buf=="exp-rev")
+			CONF_score_reverse = 1;
+		else if(buf=="nn_iter")
+			fin >> CONF_NN_ITER;
+		else if(buf=="nn_lrate")
+			fin >> CONF_NN_LRATE;
+		else if(buf=="nn_wd")
+			fin >> CONF_NN_WD;
+		else if(buf=="nn_lmult")
+			fin >> CONF_NN_LMULT;
 		else if(buf=="vocab-out")
 			CONF_vocab_out = 1;
 		else{fin.getline(line, DATA_LINE_LEN); continue;}
@@ -110,7 +127,10 @@ void init_parsing_conf(int argc,char ** argv)
 			<< CONF_gold_file << "\t" << CONF_mach_file << "\t" << CONF_vocab_file << "\t"
 			<< CONF_if_consider_pos << "\t" << CONF_x_dim << "\t" << IND_CONF_x_dim_final << "\t"
 			<< CONF_x_dim_missing << "\t" << CONF_if_y_calss << "\t" << CONF_y_class_size << "\t"
-			<< ((CONF_vocab_out)?"Vocab-out":"Vocab-not-out") << "\t" << CONF_score_expbase << endl;
+			<< ((CONF_vocab_out)?"Vocab-out":"Vocab-not-out") << "\t" << CONF_score_expbase << "\t"
+			<< "rev-or-not:" << CONF_score_reverse << endl;
+	cout << CONF_NN_LRATE << '\t' << CONF_NN_LMULT << '\t'
+			<< CONF_NN_WD << '\t' << CONF_NN_ITER << endl;
 }
 }
 
