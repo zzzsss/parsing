@@ -13,6 +13,8 @@
 #define TESTING_CONF "conf.test.file"
 //just test, really badly rely the version before
 
+int nn_conf_wordcount;
+
 void prepare_conf()
 {
 	ofstream fout;
@@ -41,11 +43,15 @@ void prepare_conf()
 	int width = IND_CONF_x_dim_final*100;
 	fout << "[machine]\n" << "Sequential = \n" << "Parallel = \n";
 	for(int i=0;i<IND_CONF_x_dim_final;i++)
-		fout << "Tab = 27100x100\n";
+		fout << "Tab = " << nn_conf_wordcount << "x100\n";
 	fout << "#End\n";
 	fout << "Tanh = " << width << "x" << width/2 << " fanio-init-weights=1.0\n";
 	fout << "Tanh = " << width/2 << "x" << width/4 << " fanio-init-weights=1.0\n";
-	fout << "Softmax = " << width/4 << "x" << ALL_classes << " fanio-init-weights=1.0\n";
+	fout << "Tanh = " << width/4 << "x" << width/8 << " fanio-init-weights=1.0\n";
+	if(CONF_if_y_calss)
+		fout << "Softmax = " << width/8 << "x" << ALL_classes << " fanio-init-weights=1.0\n";
+	else
+		fout << "Tanh = " << width/8 << "x" << 1 << " fanio-init-weights=1.0\n";
 	fout << "#End\n";
 	fout.close();
 }
@@ -56,6 +62,10 @@ void nn_train()
 	int argc = 2;
 	char *argv[] = {"nn_train",CSLM_CONF};
 
-	extern int main_nn (int argc, char *argv[]);
-	main_nn(argc,argv);
+	extern int main_nn_softmax (int argc, char *argv[]);
+	extern int main_nn_simple (int argc, char *argv[]);
+	if(CONF_if_y_calss)
+		main_nn_softmax(argc,argv);
+	else
+		main_nn_simple(argc,argv);
 }

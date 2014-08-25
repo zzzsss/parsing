@@ -33,8 +33,8 @@ using namespace std;
 #include "cslm/Tools.h"
 #include "cslm/Mach.h"
 #include "cslm/MachConfig.h"
-#include "cslm/TrainerNgram.h"
-#include "cslm/ErrFctSoftmCrossEntNgram.h"
+#include "cslm/Trainer.h"
+#include "cslm/ErrFctMSE.h"
 
 static void usage (MachConfig &mc, bool do_exit=true)
 {
@@ -66,7 +66,7 @@ static void usage (MachConfig &mc, bool do_exit=true)
 }
 
 
-int main_nn_softmax (int argc, char *argv[])
+int main_nn_simple (int argc, char *argv[])
 {
   MachConfig mach_config(true);
   string mach_fname, train_fname, dev_fname;
@@ -123,9 +123,9 @@ int main_nn_softmax (int argc, char *argv[])
 
   mlp->Info();
 
-  ErrFctSoftmCrossEntNgram errfct(*mlp);
+  ErrFctMSE errfct(*mlp);
   //ErrFctCrossEnt errfct(*mlp);
-  TrainerNgram trainer(mlp, &errfct, (char *)train_fname.c_str(),
+  Trainer trainer(mlp, &errfct, (char *)train_fname.c_str(),
       (dev_fname.empty() ? NULL : (char *)dev_fname.c_str()),
       mach_config.get_lrate_beg(), mach_config.get_lrate_mult(),
       mach_config.get_weight_decay(), mach_config.get_last_iter(), curr_it);
@@ -134,7 +134,7 @@ int main_nn_softmax (int argc, char *argv[])
   char sfname[1024], *p;
   strcpy(sfname, mach_fname_cstr);
   p=strstr(sfname, ".mach");
-  if (p) { *p=0; strcat(sfname,".curr.mach"); }
+  if (p) { *p=0; strcat(sfname,".best.mach"); }
   trainer.TrainAndTest(sfname);
 
     // save machine at the end

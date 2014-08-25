@@ -18,7 +18,7 @@ string POS_START_2 = "<ss-POS>";
 string POS_END_2 = "</ss-POS>";
 string POS_UNKNOWN = "<unk-POS>";
 
-int ALL_classes=-1;
+int ALL_classes=1;	//1 is for the simple sigmoid way(they don't change it)
 //-------------------Configurations---------------
 namespace parsing_conf{
 //1.pre-training
@@ -36,11 +36,12 @@ int CONF_if_consider_pos=0;	//0:no;1:word+pos;2:add pos;3:both	-- default 1
 int CONF_x_dim=6;			//the input dim to the nn 6 or 10--- default 6
 int IND_CONF_x_dim_final=6;
 int CONF_x_dim_missing=-1;	//the missing one for the dimension(only missing one)
-int CONF_if_y_calss=1;	//if use the softmax to classify the output
-int CONF_y_class_size=5;	//how many classes of y(only if before one is true)
 
 //4.scores
-double CONF_score_expbase = -1;	//exp score classify base
+int CONF_if_y_calss=1;	//if use the softmax to classify the output
+int CONF_y_class_size=5;	//how many classes of y(only if before one is true)<naive way>
+
+double CONF_score_expbase = -1;	//exp score classify base<exp way>
 int CONF_score_reverse = 0;
 
 //nn: conf of the nn
@@ -94,6 +95,8 @@ void read_conf(const char* file)
 			CONF_vocab_out = 1;
 		else{fin.getline(line, DATA_LINE_LEN); continue;}
 	}
+
+	//about input
 	if(CONF_x_dim != 6 && CONF_x_dim != 10)
 		Error("Bad x dimension.");
 	if(CONF_x_dim_missing>=0 && CONF_x_dim_missing<CONF_x_dim)
@@ -103,12 +106,13 @@ void read_conf(const char* file)
 	if(CONF_if_consider_pos & 0x2)	//pos
 		IND_CONF_x_dim_final *= 2;
 
-	if(CONF_y_class_size==1)
-		CONF_if_y_calss = 0;
-	else if(CONF_y_class_size>1)
+	//about output
+	if(CONF_y_class_size>1 || CONF_score_expbase>1)
 		CONF_if_y_calss = 1;
+	else if(CONF_y_class_size==1)
+		CONF_if_y_calss = 0;
 	else
-		Error("Illegal yclass-size...");
+		Error("Illegal output specification...");
 }
 
 void init_parsing_conf(int argc,char ** argv)

@@ -6,6 +6,7 @@
  */
 #include "common.h"
 
+//for the softmax output ways...
 REAL* count_scores(vector<int>& ashead)
 {
 	int num = ashead.size();

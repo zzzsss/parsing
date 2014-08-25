@@ -7,20 +7,10 @@
 
 #include "common.h"
 
-//no iteration version...
-void pre_training()
+//prepare the words...
+static void prepare_worldlist()
 {
 	CONLLReader* reader = new CONLLReader();
-
-	cout << "---1.Opening train file '" << CONF_train_file << "'" << endl;
-	cout << "----No iteration mode----" << endl;
-	//-features
-	HashMap all_features(CONS_feat_map_size);
-	vector<int> all_feat_ashead;
-	vector<string* > all_feat_str;
-	//-counts
-	int sentence_count=0,feat_count=0,tokens_count=0;
-
 	//--if no outside vocab
 	if(!CONF_vocab_out){
 		cout << "1.5-costruct vocab since no out-vocab" << endl;
@@ -100,8 +90,24 @@ void pre_training()
 			fout << *(all_word_str.at(i)) << '\n';
 		fout.close();
 		reader->finishReading();
+;
 	}
+}
 
+//no iteration version...
+void pre_training_softmax()
+{
+	CONLLReader* reader = new CONLLReader();
+	cout << "---1.Opening train file '" << CONF_train_file << "'" << endl;
+	cout << "----No iteration mode----" << endl;
+	//-features
+	HashMap all_features(CONS_feat_map_size);
+	vector<int> all_feat_ashead;
+	vector<string* > all_feat_str;
+	//-counts
+	int sentence_count=0,feat_count=0,tokens_count=0;
+
+	prepare_worldlist();
 	//2.read-in all the feats
 	cout << "--2.load vocab and get features" << endl;
 	HashMap * all_words = load_wordlist(CONF_vocab_file.c_str());
@@ -162,6 +168,7 @@ void pre_training()
 			<< "--Feats: " << feat_count << '\n';
 
 	//2.5 about the statistics and scores...
+	REAL* count_scores(vector<int>& ashead);
 	REAL* final_scores = count_scores(all_feat_ashead);
 
 	//4.assign the scores or classes && write to data-file
@@ -176,11 +183,11 @@ void pre_training()
 		//write the x
 		fout << *(all_feat_str.at(i));
 
-		if(CONF_y_class_size){
+		if(CONF_if_y_calss){
 			fout << final_scores[i] << '\n';
 		}
 		else{
-			Error("Not supporting now...");
+			Error("Not here now...");
 			/*
 			//get y and write it
 			int how_many = all_feat_ashead[i];
@@ -214,4 +221,83 @@ void pre_training()
 		delete all_feat_str[i];
 	cout << "--Finish pre-training." << endl;
 	return;
+}
+
+
+void pre_training_simple()
+{
+	CONLLReader* reader = new CONLLReader();
+	cout << "---1.Opening train file '" << CONF_train_file << "'" << endl;
+	cout << "----No iteration mode----" << endl;
+	int sentence_count=0,feat_count=0,tokens_count=0;
+	prepare_worldlist();
+	//2.read-in all the feats
+	cout << "--2.load vocab and get features" << endl;
+	HashMap * all_words = load_wordlist(CONF_vocab_file.c_str());
+	reader->startReading(CONF_train_file.c_str());
+	DependencyInstance* x = reader->getNext();
+
+	string tmp_data_file = CONF_data_file+".ztmp";
+	ofstream fout;
+	fout.open(tmp_data_file.c_str());
+	while(x != NULL){
+		sentence_count++;
+		if(sentence_count % 3000 == 0)
+			cout << "--Reading sentence " << sentence_count << endl;
+		int length = x->forms->size();
+		tokens_count += length;
+		int* word_index = get_word_index(length,x,all_words,0);
+		//--deal with all pairs
+		for(int i=0;i<length;i++){
+			for(int j=i+1;j<length;j++){
+				for(int lr=0;lr<2;lr++){
+					feat_count++;
+					string *tmp_str = 0;
+					int head=i,modify=j;
+					if(lr==E_LEFT){
+						head=j;
+						modify=i;
+						tmp_str = get_feature(length,j,i,word_index);
+					}
+					else{
+						tmp_str = get_feature(length,i,j,word_index);
+					}
+					//simply just output
+					int tmp_score = ((*x->heads)[modify] == head) ? 1 : -1;
+					fout << *tmp_str << tmp_score << '\n';
+					delete tmp_str;
+				}
+			}
+		}
+		//next
+		delete x;
+		delete []word_index;
+		x = reader->getNext();
+	}
+	reader->finishReading();
+	fout.close();
+	delete reader;
+	cout << "-Training data:\n"
+			<< "--Sentences: " << sentence_count << '\n'
+			<< "--Tokens: " << tokens_count << '\n'
+			<< "--Feats: " << feat_count << '\n';
+
+	//output data file
+	cout << "---3.write date file... " << endl;
+	fout.open(CONF_data_file.c_str());
+	fout << feat_count << ' ' << IND_CONF_x_dim_final << ' ' << 1 << endl;
+	fout.close();
+	string command_tmp = "cat "+tmp_data_file+" >> "+CONF_data_file+";"
+			+"rm "+tmp_data_file+";";
+	system(command_tmp.c_str());	//use unix command...
+	cout << "--Finish pre-training." << endl;
+	return;
+}
+
+void pre_training()
+{
+	if(CONF_if_y_calss)
+		pre_training_softmax();
+	else
+		pre_training_simple();
 }

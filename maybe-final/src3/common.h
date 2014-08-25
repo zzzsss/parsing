@@ -92,7 +92,6 @@ void fill_feature(int len,int head,int modify,int* index,REAL* to_fill);
 void debug_pretraining_evaluate(REAL* scores,HashMap* maps,HashMap* wl);
 void eval();
 void pre_training();
-REAL* count_scores(vector<int>& ashead);
 void nn_train();
 
 //variables really important for all

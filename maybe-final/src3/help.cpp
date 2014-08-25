@@ -29,6 +29,11 @@ HashMap *load_wordlist(const char *fname)
 		Error("Something wrong with vocab file.");
 	}
 	cout << "---Done with loading vocab, all is " << num << endl;
+
+	//for the nn conf file...
+	extern int nn_conf_wordcount;
+	nn_conf_wordcount = num;
+
 	return res;
 }
 //-----------------------2.get word-index------------------------------
